@@ -43,8 +43,8 @@ return {
 		["zh-cn"] = "报告高压",
 	},
 	status_wheel_pressure_msg = {
-		en = "Heavy pressure here, need backup!",
-		["zh-cn"] = "我这边高压！需要支援！",
+		en = "Under pressure!!!",
+		["zh-cn"] = "高压！！！",
 	},
 
 	-- 设置项（轮盘行为，整合自 For The Emperor）
