@@ -466,11 +466,26 @@ end
 
 setup_keybind_functions()
 
--- ############ 样式放大（FTE：图标/扇区尺寸） ############
+-- ############ 样式（图标/扇区尺寸按槽位数动态缩放，防多槽重叠） ############
 
-local ICON_SIZE = { 112, 112 }
+-- 每槽弧长 = 2πr/n（r≈185-190），图标直径取弧长 72% 左右留间隙
+local function wheel_icon_size()
+	local n = num_slots
+
+	if n <= 8 then
+		return 112
+	elseif n <= 10 then
+		return 100
+	elseif n <= 12 then
+		return 88
+	else
+		return 76
+	end
+end
+
+local ICON_SIZE = { wheel_icon_size(), wheel_icon_size() }
 local LINE_SIZE = { 200, 147 }
-local SLICE_SIZE = { 120, 140 }
+local SLICE_SIZE = { wheel_icon_size() + 12, wheel_icon_size() + 44 }
 
 mod:hook_require("scripts/ui/hud/elements/smart_tagging/hud_element_smart_tagging_settings", function (settings)
 	mod.smart_tagging_settings = settings
