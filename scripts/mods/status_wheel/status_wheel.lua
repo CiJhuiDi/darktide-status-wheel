@@ -1,6 +1,7 @@
 -- chunkname: @scripts/mods/status_wheel/status_wheel.lua
 --[[
 	状态轮盘 (Status Wheel) v2.0.0
+	Author: CiJhuiDi
 	整合 For The Emperor（Enhanced Comms Wheel，已停更）全部功能 + 状态输出：
 
 	轮盘（默认 13 槽，可拖拽重排 + 持久化）：
