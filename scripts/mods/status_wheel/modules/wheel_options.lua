@@ -87,6 +87,11 @@ local wheel_options = {
 		display_name = "status_wheel_pressure",
 		icon = "content/ui/materials/hud/communication_wheel/icons/attention",
 		action = "pressure",
+		-- 原生轮盘回调会访问 voice_event_data.voice_tag_id（遥测），必须带（空 trigger 不发声）
+		voice_event_data = {
+			voice_tag_concept = VOQueryConstants.concepts.on_demand_com_wheel,
+			voice_tag_id = "",
+		},
 	},
 	[WHEEL_OPTION.location] = {
 		display_name = "loc_communication_wheel_display_name_location",
@@ -129,20 +134,33 @@ local wheel_options = {
 	},
 
 	-- 状态条目（本 mod 原有，action 驱动）
+	-- 注意：原生轮盘回调会访问 voice_event_data.voice_tag_id（遥测），必须带（空 trigger 不发声）
 	[WHEEL_OPTION.ability] = {
 		display_name = "status_wheel_ability",
 		icon = "content/ui/materials/icons/abilities/default",
 		action = "ability",
+		voice_event_data = {
+			voice_tag_concept = VOQueryConstants.concepts.on_demand_com_wheel,
+			voice_tag_id = "",
+		},
 	},
 	[WHEEL_OPTION.grenade] = {
 		display_name = "status_wheel_grenade",
 		icon = "content/ui/materials/icons/abilities/throwables/default",
 		action = "grenade",
+		voice_event_data = {
+			voice_tag_concept = VOQueryConstants.concepts.on_demand_com_wheel,
+			voice_tag_id = "",
+		},
 	},
 	[WHEEL_OPTION.ammo_status] = {
 		display_name = "status_wheel_ammo",
 		icon = "content/ui/materials/hud/communication_wheel/icons/ammo",
 		action = "ammo",
+		voice_event_data = {
+			voice_tag_concept = VOQueryConstants.concepts.on_demand_com_wheel,
+			voice_tag_id = "",
+		},
 	},
 }
 
