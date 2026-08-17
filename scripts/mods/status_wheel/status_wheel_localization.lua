@@ -38,6 +38,14 @@ return {
 		en = "Ammo",
 		["zh-cn"] = "子弹余量",
 	},
+	status_wheel_pressure = {
+		en = "Under Pressure",
+		["zh-cn"] = "报告高压",
+	},
+	status_wheel_pressure_msg = {
+		en = "Heavy pressure here, need backup!",
+		["zh-cn"] = "我这边高压！需要支援！",
+	},
 
 	-- 设置项（轮盘行为，整合自 For The Emperor）
 	options = {
@@ -87,6 +95,10 @@ return {
 	keybind_health = {
 		en = "Need Health",
 		["zh-cn"] = "需要治疗",
+	},
+	keybind_pressure = {
+		en = "Under Pressure",
+		["zh-cn"] = "报告高压",
 	},
 	keybind_help = {
 		en = "Need Help",

@@ -43,6 +43,7 @@ mod:add_global_localize_strings({
 	status_wheel_ability = status_wheel_localization.status_wheel_ability,
 	status_wheel_grenade = status_wheel_localization.status_wheel_grenade,
 	status_wheel_ammo = status_wheel_localization.status_wheel_ammo,
+	status_wheel_pressure = status_wheel_localization.status_wheel_pressure,
 	loc_for_the_emperor = status_wheel_localization.mod_title,
 	loc_communication_wheel_need_help = status_wheel_localization.need_help_comms_wheel,
 })
@@ -74,6 +75,33 @@ end
 
 -- 槽位顺序（key 列表），跨会话持久化；拖拽重排/修改后立即保存
 mod.wheel_config = mod:get("wheel_config") or table.clone(DEFAULT_WHEEL_CONFIG)
+
+-- 迁移：默认布局中新增的条目若不在已保存配置里，追加到尾部（老用户升级后也能看到新按钮）
+do
+	local changed = false
+
+	for i = 1, #DEFAULT_WHEEL_CONFIG do
+		local key = DEFAULT_WHEEL_CONFIG[i]
+		local found = false
+
+		for j = 1, #mod.wheel_config do
+			if mod.wheel_config[j] == key then
+				found = true
+
+				break
+			end
+		end
+
+		if not found then
+			mod.wheel_config[#mod.wheel_config + 1] = key
+			changed = true
+		end
+	end
+
+	if changed then
+		mod:set("wheel_config", mod.wheel_config)
+	end
+end
 
 local function save_wheel_config()
 	mod:set("wheel_config", mod.wheel_config)

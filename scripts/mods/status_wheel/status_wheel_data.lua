@@ -143,6 +143,14 @@ mod_data.options = {
 					default_value = {},
 				},
 				{
+					setting_id = "keybind_pressure",
+					type = "keybind",
+					keybind_trigger = "pressed",
+					keybind_type = "function_call",
+					function_name = "keybind_pressure",
+					default_value = {},
+				},
+				{
 					setting_id = "keybind_help",
 					type = "keybind",
 					keybind_trigger = "pressed",

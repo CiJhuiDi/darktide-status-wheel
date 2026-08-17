@@ -116,6 +116,15 @@ local function send_localized_chat(chat_message_data)
 	end
 end
 
+-- 报告高压：聊天发“高压”告警（独立冷却，复用 send_wheel_message 的按消息冷却）
+mod.send_pressure_report = function ()
+	if not mod.is_in_combat() then
+		return
+	end
+
+	mod.send_wheel_message(mod:localize("status_wheel_pressure_msg"), 10, "pressure")
+end
+
 -- ############ 选项执行总入口 ############
 
 -- 执行一个轮盘选项（轮盘选中或快捷键共用）
@@ -136,6 +145,13 @@ mod.execute_option = function (option)
 	-- 求助联动
 	if action == "help" then
 		mod.need_help(10)
+
+		return
+	end
+
+	-- 高压告警
+	if action == "pressure" then
+		mod.send_pressure_report()
 
 		return
 	end

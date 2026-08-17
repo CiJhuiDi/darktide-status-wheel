@@ -19,7 +19,7 @@ local ChannelTags = ChatManagerConstants.ChannelTag
 
 local WHEEL_OPTION = table.enum(
 	"ammo", "attention", "emperor", "enemy", "health", "help",
-	"location", "no", "thanks", "yes",
+	"location", "no", "thanks", "yes", "pressure",
 	"ability", "grenade", "ammo_status"
 )
 
@@ -83,6 +83,11 @@ local wheel_options = {
 			voice_tag_id = "",
 		},
 	},
+	[WHEEL_OPTION.pressure] = {
+		display_name = "status_wheel_pressure",
+		icon = "content/ui/materials/hud/communication_wheel/icons/attention",
+		action = "pressure",
+	},
 	[WHEEL_OPTION.location] = {
 		display_name = "loc_communication_wheel_display_name_location",
 		icon = "content/ui/materials/hud/communication_wheel/icons/location",
@@ -141,9 +146,9 @@ local wheel_options = {
 	},
 }
 
--- 默认布局（FTE 原生 10 项 + 状态 3 项 = 13 槽）
+-- 默认布局（FTE 原生 10 项 + 高压报告 + 状态 3 项 = 14 槽）
 local DEFAULT_WHEEL_CONFIG = {
-	"thanks", "health", "emperor", "yes", "enemy", "location", "attention", "no", "help", "ammo",
+	"thanks", "health", "emperor", "yes", "enemy", "location", "attention", "no", "help", "pressure", "ammo",
 	"ability", "grenade", "ammo_status",
 }
 
