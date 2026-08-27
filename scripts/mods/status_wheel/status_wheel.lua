@@ -4,13 +4,15 @@
 	Author: CiJhuiDi
 	整合 For The Emperor（Enhanced Comms Wheel，已停更）全部功能 + 状态输出：
 
-	轮盘（默认 13 槽，可拖拽重排 + 持久化）：
-	  - 原生增强 10 项：要弹药/注意/帝皇/敌人/治疗/帮助/位置/是/否/谢谢
-	    （带角色语音、聊天消息、场景标记动作）
+	轮盘（默认 14 槽，可拖拽重排 + 持久化）：
+	  - 原版 7 项：要弹药/注意/帝皇/敌人/治疗/位置/谢谢（带语音、聊天、标记动作）
+	  - FTE 新增 3 项：帮助/是/否
 	  - 状态 3 项：大招状态 / 手雷数量 / 子弹余量（本 mod 原有）
 
 	特性：
-	  - 右键拖拽重排槽位，布局跨会话保存（mod:set("wheel_config")）
+	  - 选项分类开关：原版 / FTE 新增 / 高压 / 状态 四类总开关 + 每项独立开关；
+	    槽位数量、均分位置、图标大小随实际显示数自动调整
+	  - 右键拖拽重排槽位，布局跨会话保存（mod:set("wheel_config")）；可关（布局锁定）
 	  - 每项独立快捷键（Mod Options 里绑定），不开轮盘直接触发
 	  - 帮助联动：选帮助 → 本地求救语音 + 聊天 #need_help 协议；
 	    队友装了本 mod 会收到 → 帮播语音 + 头顶 10 秒求助标记
@@ -34,7 +36,8 @@ mod:io_dofile("status_wheel/scripts/mods/status_wheel/modules/need_help")
 local WHEEL_OPTION = wheel_options_module.WHEEL_OPTION
 local wheel_options = wheel_options_module.wheel_options
 local DEFAULT_WHEEL_CONFIG = wheel_options_module.DEFAULT_WHEEL_CONFIG
-local ENABLE_SETTING_BY_OPTION = wheel_options_module.ENABLE_SETTING_BY_OPTION
+local OPTION_SECTION = wheel_options_module.OPTION_SECTION
+local SECTION_ENABLE_SETTING = wheel_options_module.SECTION_ENABLE_SETTING
 
 -- ############ 全局本地化注入（轮盘显示名等，原生 Localize 可解析） ############
 
@@ -108,22 +111,61 @@ local function save_wheel_config()
 	mod:set("wheel_config", mod.wheel_config)
 end
 
-local num_slots = #mod.wheel_config
+-- 选项是否启用：类总开关 + 独立开关双重判断
+-- 用 `== false` 判断（未保存/缺省返回 nil 视为开启），老用户升级不丢选项
+local function is_option_enabled(key)
+	local option = wheel_options[key]
 
--- 由布局生成选项表：过滤被禁用的状态条目，跳过未知 key
+	if not option then
+		return false
+	end
+
+	local section = OPTION_SECTION[key]
+
+	if section then
+		local section_setting = SECTION_ENABLE_SETTING[section]
+
+		if section_setting and mod:get(section_setting) == false then
+			return false
+		end
+	end
+
+	local enable_setting = option.enable_setting
+
+	if enable_setting and mod:get(enable_setting) == false then
+		return false
+	end
+
+	return true
+end
+
+mod.is_option_enabled = is_option_enabled
+
+-- 由 wheel_config 生成"当前可见"的 key 列表（过滤被禁用的类/项）
+-- 拖拽重排必须基于可见列表操作：显示槽位与 wheel_config 索引不再一一对应
+local function get_visible_config()
+	local visible = {}
+
+	for i = 1, #mod.wheel_config do
+		local key = mod.wheel_config[i]
+
+		if is_option_enabled(key) then
+			visible[#visible + 1] = key
+		end
+	end
+
+	return visible
+end
+
+-- 由布局生成选项表：过滤被禁用类/条目，跳过未知 key
 local function generate_options(wheel_config)
 	local options = {}
 
 	for i = 1, #wheel_config do
 		local key = wheel_config[i]
-		local option = wheel_options[key]
 
-		if option then
-			local enable_setting = ENABLE_SETTING_BY_OPTION[key]
-
-			if not enable_setting or mod:get(enable_setting) then
-				options[#options + 1] = option
-			end
+		if is_option_enabled(key) then
+			options[#options + 1] = wheel_options[key]
 		end
 	end
 
@@ -331,11 +373,35 @@ local function get_ammo_status()
 	local inventory_component = unit_data_extension:read_component("inventory")
 	local wielded_slot = inventory_component and inventory_component.wielded_slot or "none"
 
-	if wielded_slot == "none" or not slot_configuration[wielded_slot] then
-		return nil
+	-- 目标武器槽：优先当前手持（若是远程），否则找第一把有弹药的远程武器
+	-- （手持近战/空手时也报远程弹药，而不是提示“近战武器”）
+	local target_slot
+
+	if wielded_slot ~= "none" and slot_configuration[wielded_slot] then
+		local wielded_component = unit_data_extension:read_component(wielded_slot)
+
+		if wielded_component and wielded_component.max_ammunition_clip and wielded_component.max_ammunition_clip[1] > 0 then
+			target_slot = wielded_slot
+		end
 	end
 
-	local slot_component = unit_data_extension:read_component(wielded_slot)
+	if not target_slot then
+		for slot_name, _ in pairs(slot_configuration) do
+			local component = unit_data_extension:read_component(slot_name)
+
+			if component and component.max_ammunition_clip and component.max_ammunition_clip[1] > 0 then
+				target_slot = slot_name
+
+				break
+			end
+		end
+	end
+
+	if not target_slot then
+		return mod:localize("no_ranged_weapon")
+	end
+
+	local slot_component = unit_data_extension:read_component(target_slot)
 
 	if not slot_component then
 		return nil
@@ -345,7 +411,7 @@ local function get_ammo_status()
 	local max_clip = slot_component.max_ammunition_clip and slot_component.max_ammunition_clip[1] or 0
 
 	if max_clip <= 0 then
-		return mod:localize("melee_weapon")
+		return mod:localize("no_ranged_weapon")
 	end
 
 	if mod:get("ammo_show_reserve") then
@@ -460,19 +526,17 @@ end
 local function setup_keybind_functions()
 	for key, option in pairs(wheel_options) do
 		mod["keybind_" .. key] = function ()
-			mod.run_option_by_keybind(option)
+			mod.run_option_by_keybind(key, option)
 		end
 	end
 end
 
 setup_keybind_functions()
 
--- ############ 样式（图标/扇区尺寸按槽位数动态缩放，防多槽重叠） ############
+-- ############ 样式（图标/扇区尺寸按实际显示槽位数动态缩放，防多槽重叠） ############
 
 -- 每槽弧长 = 2πr/n（r≈185-190），图标直径取弧长 72% 左右留间隙
-local function wheel_icon_size()
-	local n = num_slots
-
+local function wheel_icon_size(n)
 	if n <= 8 then
 		return 112
 	elseif n <= 10 then
@@ -484,14 +548,45 @@ local function wheel_icon_size()
 	end
 end
 
-local ICON_SIZE = { wheel_icon_size(), wheel_icon_size() }
 local LINE_SIZE = { 200, 147 }
-local SLICE_SIZE = { wheel_icon_size() + 12, wheel_icon_size() + 44 }
+
+-- 按实际显示数更新图标/扇区尺寸：直接改每个 entry 的 widget.style（实际渲染对象）
+-- （definitions.style 可能被 widget 创建时拷贝，只改定义表不生效）
+mod.apply_icon_sizes = function (self, count)
+	local icon = wheel_icon_size(count)
+
+	-- 兜底：同步定义表，新建 widget 时也有正确尺寸
+	if mod.wheel_style then
+		pcall(function ()
+			mod.wheel_style.style_id_2.size = { icon, icon }
+			mod.wheel_style.style_id_4.size = { icon + 12, icon + 44 }
+			mod.wheel_style.style_id_4.uvs = { { 0.1, 0 }, { 0.9, 1 } }
+			mod.wheel_style.style_id_5.size = { icon + 12, icon + 44 }
+			mod.wheel_style.style_id_5.uvs = { { 0.1, 0 }, { 0.9, 1 } }
+		end)
+	end
+
+	if not self or not self._entries then
+		return
+	end
+
+	for i = 1, #self._entries do
+		local style = self._entries[i].widget.style
+
+		if style then
+			pcall(function ()
+				style.style_id_2.size = { icon, icon } -- icon
+				style.style_id_4.size = { icon + 12, icon + 44 } -- slice_eighth_highlight
+				style.style_id_4.uvs = { { 0.1, 0 }, { 0.9, 1 } }
+				style.style_id_5.size = { icon + 12, icon + 44 } -- slice_eighth
+				style.style_id_5.uvs = { { 0.1, 0 }, { 0.9, 1 } }
+			end)
+		end
+	end
+end
 
 mod:hook_require("scripts/ui/hud/elements/smart_tagging/hud_element_smart_tagging_settings", function (settings)
 	mod.smart_tagging_settings = settings
-	settings.wheel_slots = num_slots
-	mod:info("[status_wheel] wheel_slots -> " .. tostring(num_slots))
 end)
 
 mod:hook_require("scripts/ui/hud/elements/smart_tagging/hud_element_smart_tagging_definitions", function (definitions)
@@ -503,35 +598,39 @@ mod:hook_require("scripts/ui/hud/elements/smart_tagging/hud_element_smart_taggin
 		return
 	end
 
-	local ok = pcall(function ()
-		style.style_id_2.size = ICON_SIZE -- icon
-		style.style_id_3.size = LINE_SIZE -- slice_eighth_line
-
-		style.style_id_4.size = SLICE_SIZE -- slice_eighth_highlight
-		style.style_id_4.uvs = { { 0.1, 0 }, { 0.9, 1 } }
-
-		style.style_id_5.size = SLICE_SIZE -- slice_eighth
-		style.style_id_5.uvs = { { 0.1, 0 }, { 0.9, 1 } }
-	end)
-
-	if not ok then
-		mod:warning("[status_wheel] definitions style fields missing, style scaling skipped")
-	end
+	mod.wheel_style = style
 end)
 
 -- ############ Hooks ############
 
--- 选项合并：完全替换为 wheel_config 布局（FTE 方式）
+-- 选项合并：完全替换为 wheel_config 布局，槽位/均分/图标大小随实际显示数动态调整（FTE 方式）
 mod:hook("HudElementSmartTagging", "_populate_wheel", function (func, self, options)
 	options = options or {}
 
-	local current_slots = #mod.wheel_config
+	local option_list = generate_options(mod.wheel_config)
+	local count = #option_list
 
-	if #self._entries < current_slots then
-		self:_setup_entries(current_slots)
+	-- 空轮盘保护：至少保留 1 个隐藏槽，避免 _update_widget_locations 的 0 除崩溃
+	if count < 1 then
+		count = 1
 	end
 
-	return func(self, generate_options(mod.wheel_config))
+	-- 槽位数与实际显示数同步（_setup_entries 销毁重建，可增可减）；重建时清拖拽引用防悬空
+	if #self._entries ~= count then
+		mod.dragged_entry = nil
+		mod.dragged_index = nil
+
+		self:_setup_entries(count)
+	end
+
+	-- 均分遍历按实际槽数（原生 _update_widget_locations 用 #entries 均分角度）
+	if mod.smart_tagging_settings then
+		mod.smart_tagging_settings.wheel_slots = count
+	end
+
+	mod.apply_icon_sizes(self, count)
+
+	return func(self, option_list)
 end)
 
 -- 10+ 槽下原生 start_angle 偏移会导致选项错位/重叠，强制均匀分布
@@ -586,8 +685,8 @@ mod:hook_safe("HudElementSmartTagging", "update", function (self, dt, t, ui_rend
 		end
 	end
 
-	-- 拖拽重排（FTE：右键按住拖条目换槽）
-	if self._wheel_active and Mouse.button(1) == 1 then
+	-- 拖拽重排（FTE：右键按住拖条目换槽；enable_drag_reorder 关闭时禁用，布局锁定）
+	if self._wheel_active and mod:get("enable_drag_reorder") ~= false and Mouse.button(1) == 1 then
 		local hovered_entry, hovered_index = self:_is_wheel_entry_hovered(t)
 
 		if hovered_entry then
@@ -597,10 +696,22 @@ mod:hook_safe("HudElementSmartTagging", "update", function (self, dt, t, ui_rend
 			end
 
 			if hovered_index ~= mod.dragged_index then
-				local config = mod.wheel_config
-				local replaced_key = config[hovered_index]
-				config[hovered_index] = config[mod.dragged_index]
-				config[mod.dragged_index] = replaced_key
+				local visible = get_visible_config()
+
+				-- 在可见列表内换位（禁用项不参与，避免索引错位）
+				local replaced_key = visible[hovered_index]
+				visible[hovered_index] = visible[mod.dragged_index]
+				visible[mod.dragged_index] = replaced_key
+
+				-- 合并回 wheel_config：可见项按新顺序原位填充，被禁用项保持原位
+				local j = 1
+
+				for i = 1, #mod.wheel_config do
+					if is_option_enabled(mod.wheel_config[i]) then
+						mod.wheel_config[i] = visible[j]
+						j = j + 1
+					end
+				end
 
 				mod.dragged_entry = hovered_entry
 				mod.dragged_index = hovered_index
@@ -709,15 +820,9 @@ end)
 
 -- ############ Callbacks ############
 
--- 设置变更时标记脏，下帧刷新轮盘条目
+-- 设置变更时标记脏，下帧刷新轮盘条目（所有 enable_* 开关都影响轮盘内容；拖拽开关除外）
 mod.on_setting_changed = function (setting_id)
-	local refresh_settings = {
-		enable_ability = true,
-		enable_grenade = true,
-		enable_ammo = true,
-	}
-
-	if refresh_settings[setting_id] then
+	if setting_id and string.sub(setting_id, 1, 7) == "enable_" and setting_id ~= "enable_drag_reorder" then
 		mod.wheel_dirty = true
 	end
 end

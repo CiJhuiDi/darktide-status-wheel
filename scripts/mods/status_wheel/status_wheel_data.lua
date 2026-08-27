@@ -12,21 +12,114 @@ local mod_data = {
 -- 所有 setting_id 和 dropdown text id 会自动经过 mod:localize() 本地化
 mod_data.options = {
 	widgets = {
-		-- 状态条目开关
+		-- 三个选项类，各一个折叠组：组内第一项 = 类总开关，其后为子开关
+		-- 关闭后整个类的选项不出现在轮盘上（快捷键同步失效）
+		-- 轮盘槽位/位置/图标大小随实际显示数自动均分与缩放
 		{
-			setting_id = "enable_ability",
-			type = "checkbox",
-			default_value = true,
+			setting_id = "native_options",
+			type = "group",
+			sub_widgets = {
+				-- 类总开关：原版轮盘 7 项
+				{
+					setting_id = "enable_native",
+					type = "checkbox",
+					default_value = true,
+				},
+				{
+					setting_id = "enable_option_ammo",
+					type = "checkbox",
+					default_value = true,
+				},
+				{
+					setting_id = "enable_option_attention",
+					type = "checkbox",
+					default_value = true,
+				},
+				{
+					setting_id = "enable_option_emperor",
+					type = "checkbox",
+					default_value = true,
+				},
+				{
+					setting_id = "enable_option_enemy",
+					type = "checkbox",
+					default_value = true,
+				},
+				{
+					setting_id = "enable_option_health",
+					type = "checkbox",
+					default_value = true,
+				},
+				{
+					setting_id = "enable_option_location",
+					type = "checkbox",
+					default_value = true,
+				},
+				{
+					setting_id = "enable_option_thanks",
+					type = "checkbox",
+					default_value = true,
+				},
+			},
 		},
 		{
-			setting_id = "enable_grenade",
-			type = "checkbox",
-			default_value = true,
+			setting_id = "enhanced_options",
+			type = "group",
+			sub_widgets = {
+				-- 类总开关：FTE 新增 3 项
+				{
+					setting_id = "enable_enhanced",
+					type = "checkbox",
+					default_value = true,
+				},
+				{
+					setting_id = "enable_option_help",
+					type = "checkbox",
+					default_value = true,
+				},
+				{
+					setting_id = "enable_option_no",
+					type = "checkbox",
+					default_value = true,
+				},
+				{
+					setting_id = "enable_option_yes",
+					type = "checkbox",
+					default_value = true,
+				},
+			},
 		},
 		{
-			setting_id = "enable_ammo",
-			type = "checkbox",
-			default_value = true,
+			setting_id = "status_options",
+			type = "group",
+			sub_widgets = {
+				-- 类总开关：本 mod 新增状态 4 项（大招/手雷/子弹/报告高压）
+				{
+					setting_id = "enable_status",
+					type = "checkbox",
+					default_value = true,
+				},
+				{
+					setting_id = "enable_ability",
+					type = "checkbox",
+					default_value = true,
+				},
+				{
+					setting_id = "enable_grenade",
+					type = "checkbox",
+					default_value = true,
+				},
+				{
+					setting_id = "enable_ammo",
+					type = "checkbox",
+					default_value = true,
+				},
+				{
+					setting_id = "enable_pressure",
+					type = "checkbox",
+					default_value = true,
+				},
+			},
 		},
 		-- 输出目标（默认队伍频道：设计初衷是给队友提示状态）
 		{
@@ -75,6 +168,12 @@ mod_data.options = {
 			setting_id = "options",
 			type = "group",
 			sub_widgets = {
+				{
+					setting_id = "enable_drag_reorder",
+					tooltip = "enable_drag_reorder_desc",
+					type = "checkbox",
+					default_value = true,
+				},
 				{
 					setting_id = "disable_dibs",
 					tooltip = "disable_dibs_desc",

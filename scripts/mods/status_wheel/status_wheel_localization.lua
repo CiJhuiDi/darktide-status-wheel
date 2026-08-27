@@ -47,10 +47,104 @@ return {
 		["zh-cn"] = "高压！！！",
 	},
 
+	-- 轮盘选项分类开关（类总开关 + 子开关）
+	enable_native = {
+		en = "Enable: Native Options",
+		["zh-cn"] = "启用：原版选项",
+	},
+	enable_native_description = {
+		en = "Master switch for the 7 options from the vanilla wheel (ammo / attention / emperor / enemy / health / location / thanks). Turn off to keep the wheel clean.",
+		["zh-cn"] = "原版轮盘 7 项的总开关（要弹药/注意/帝皇/敌人/治疗/位置/谢谢）。关闭后轮盘不再显示这些选项。",
+	},
+	native_options = {
+		en = "Native Options",
+		["zh-cn"] = "原版选项",
+	},
+	enable_enhanced = {
+		en = "Enable: Enhanced Options",
+		["zh-cn"] = "启用：增强选项",
+	},
+	enable_enhanced_description = {
+		en = "Master switch for the 3 extra options from For The Emperor (help / no / yes). Turn off to keep the wheel clean.",
+		["zh-cn"] = "For The Emperor 新增 3 项的总开关（帮助/否/是）。关闭后轮盘不再显示这些选项。",
+	},
+	enhanced_options = {
+		en = "Enhanced Options (FTE)",
+		["zh-cn"] = "增强选项（新增）",
+	},
+	enable_pressure = {
+		en = "Enable: Under Pressure",
+		["zh-cn"] = "启用：报告高压",
+	},
+	enable_pressure_description = {
+		en = "Adds the \"Under Pressure\" wheel option that shouts a warning to your party.",
+		["zh-cn"] = "在轮盘中添加“报告高压”条目，向队伍喊话高压告警。",
+	},
+	enable_status = {
+		en = "Enable: Status Output",
+		["zh-cn"] = "启用：状态输出",
+	},
+	enable_status_description = {
+		en = "Master switch for the 4 status options added by this mod (combat ability / grenades / ammo / under pressure).",
+		["zh-cn"] = "本 mod 新增状态 4 项的总开关（大招状态/手雷数量/子弹余量/报告高压）。",
+	},
+	status_options = {
+		en = "Status Options",
+		["zh-cn"] = "状态条目",
+	},
+	enable_option_ammo = {
+		en = "Enable: Need Ammo",
+		["zh-cn"] = "启用：要弹药",
+	},
+	enable_option_attention = {
+		en = "Enable: Attention",
+		["zh-cn"] = "启用：注意",
+	},
+	enable_option_emperor = {
+		en = "Enable: For the Emperor",
+		["zh-cn"] = "启用：帝皇",
+	},
+	enable_option_enemy = {
+		en = "Enable: Enemy",
+		["zh-cn"] = "启用：敌人",
+	},
+	enable_option_health = {
+		en = "Enable: Need Health",
+		["zh-cn"] = "启用：治疗",
+	},
+	enable_option_help = {
+		en = "Enable: Need Help",
+		["zh-cn"] = "启用：帮助",
+	},
+	enable_option_location = {
+		en = "Enable: Location",
+		["zh-cn"] = "启用：位置",
+	},
+	enable_option_no = {
+		en = "Enable: No",
+		["zh-cn"] = "启用：否",
+	},
+	enable_option_thanks = {
+		en = "Enable: Thanks",
+		["zh-cn"] = "启用：谢谢",
+	},
+	enable_option_yes = {
+		en = "Enable: Yes",
+		["zh-cn"] = "启用：是",
+	},
+
 	-- 设置项（轮盘行为，整合自 For The Emperor）
 	options = {
 		en = "Wheel Behavior",
 		["zh-cn"] = "轮盘行为",
+	},
+	enable_drag_reorder = {
+		en = "Enable drag to rearrange",
+		["zh-cn"] = "启用右键拖拽重排",
+	},
+	enable_drag_reorder_desc = {
+		en = "Hold right mouse button on a wheel option and drag to rearrange slots. Turn off to lock the layout and prevent accidental reordering in combat.",
+		["zh-cn"] = "打开轮盘后按住右键拖动条目可重排槽位。关闭后布局锁定，防止实战中误触打乱轮盘。",
 	},
 	disable_dibs = {
 		en = "Disable calling dibs when re-tagging",
@@ -272,9 +366,9 @@ return {
 		en = "Ammo: %d/%d (reserve %d/%d)",
 		["zh-cn"] = "子弹余量：%d/%d（备弹 %d/%d）",
 	},
-	melee_weapon = {
-		en = "Ammo: melee weapon",
-		["zh-cn"] = "子弹余量：近战武器",
+	no_ranged_weapon = {
+		en = "Ammo: no ranged weapon equipped",
+		["zh-cn"] = "子弹余量：未装备远程武器",
 	},
 	status_wheel_error = {
 		en = "Unable to read status (not in a game?)",

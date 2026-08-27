@@ -180,9 +180,13 @@ mod.execute_option = function (option)
 	end)
 end
 
--- 快捷键总入口：战斗状态 + 存活检查
-mod.run_option_by_keybind = function (option)
+-- 快捷键总入口：战斗状态 + 存活检查 + 选项启用检查（被类/子开关禁用则不触发）
+mod.run_option_by_keybind = function (key, option)
 	if not mod.is_in_combat() then
+		return
+	end
+
+	if key and mod.is_option_enabled and not mod.is_option_enabled(key) then
 		return
 	end
 
