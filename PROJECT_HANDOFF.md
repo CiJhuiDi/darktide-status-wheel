@@ -1,7 +1,7 @@
 # status_wheel · 项目交接摘要
 
 > **给新会话的快速上手文档**：读完这个 + 通用规范（`暗潮\01-开发规范\Darktide-Mod开发规范.md`）即可接手。
-> 最后更新：2026-08-18 01:05 | 当前版本：v2.0.0（已推未实测）
+> 最后更新：2026-08-20 10:40 | 当前版本：v2.0.0（已推未实测；新增轮盘选项分类开关）
 
 ---
 
@@ -9,7 +9,13 @@
 
 《战锤40K：暗潮》的增强通信轮盘 mod（DMF Lua mod，V 键）。v2.0.0 整合了**已停更的 For The Emperor**（NexusMods 135，2025-03 后不维护）全部功能 + 本 mod 原有状态输出：
 
-- **轮盘 14 槽**：原生增强 10 项（要弹药/注意/帝皇/敌人/治疗/帮助/位置/是/否/谢谢，带语音+聊天+标记动作）+ 报告高压 + 状态 3 项（大招/手雷/子弹余量）
+- **轮盘 14 槽**：原版 7 项（要弹药/注意/帝皇/敌人/治疗/位置/谢谢，带语音+聊天+标记动作）+ FTE 新增 3 项（帮助/是/否）+ 报告高压 + 状态 3 项（大招/手雷/子弹余量）
+- **选项分类开关（2026-08-20 新增，3 类）**：native 原版 7 项（emperor 对应原版 cheer）/ enhanced FTE 新增 3 项（help/no/yes）/ status **本 mod 新增状态 4 项**（ability/grenade/ammo_status/**pressure 高压**，用户要求高压并入状态类）；每类一个折叠 group，**组内第一项 = 类总开关**（enable_native / enable_enhanced / enable_status），其后子开关（7+3 个 enable_option_* + enable_ability/grenade/ammo/enable_pressure）；被禁用选项从轮盘消失且对应快捷键失效（run_option_by_keybind 传 key 检查 is_option_enabled）
+- **归类结构坑（2026-08-20 用户纠错）**：总开关不能独立悬在组外（增强总开关出现在原版组下面很乱）——总开关必须和子开关同组，组内第一项；用户明确"mod 新增的四样（大招/手雷/子弹/高压）和总开关归到一起"
+- **拖拽索引错位坑（2026-08-20 用户实测发现，已修）**：FTE 原版拖拽直接操作 wheel_config[i]——前提是显示列表和布局一一对应（FTE 时代只有 3 个状态开关，几乎全开）。引入分类开关后用户一关选项，显示列表是过滤后的，拖拽索引就对不上隐藏项 → 拖了没反应。修：get_visible_config() 过滤出可见 key 列表，拖拽在可见列表内换位，再按"可见项原位填充、禁用项保持原位"合并回 wheel_config
+- **动态槽位/均分/缩放（2026-08-20 新增）**：_populate_wheel hook 按实际显示数重建 entries（_setup_entries 销毁重建可增可减）、同步 settings.wheel_slots、apply_icon_sizes 按实际数缩放图标（≤8:112 / 9-10:100 / 11-12:88 / 13+:76）；空轮盘保护 count 最小 1（防 0 除）；重建时清 dragged 引用
+- **style 引用坑（2026-08-20 修复，用户实测发现图标大小没变）**：改 definitions.style 对已创建 widget 不生效（widget.style 是创建时拷贝/独立表）——apply_icon_sizes 改为**遍历 entries 直接改 widget.style**（实际渲染对象）+ definitions 同步兜底；旧 FTE 方式（只改 definitions）从未实测过
+- **拖拽总开关（2026-08-20 新增）**：enable_drag_reorder（默认开，在"轮盘行为"组）——关掉后右键拖拽重排彻底禁用、布局锁定（防实战误触）；on_setting_changed 对该设置不触发轮盘刷新
 - **右键拖拽重排**槽位，布局跨会话保存
 - **每项独立快捷键**（Mod Options 绑定，战斗内直接触发）
 - **求助联动**：选帮助 → 本地求救语音 + 聊天 `#need_help` 协议；队友装本 mod 收到 → 帮播语音 + 头顶 10 秒求助标记
@@ -43,7 +49,10 @@ status_wheel/
 
 - `mod:get("wheel_config") or table.clone(DEFAULT)`（14 槽）；拖拽交换后 `mod:set` 立即保存
 - 有**迁移逻辑**：默认布局新增条目自动追加到已保存配置尾部（老用户升级不丢布局）
-- `generate_options` 过滤被禁用的状态条目（enable_* 开关）
+- `generate_options` 过滤：`is_option_enabled(key)` 双重判断（类总开关 + 选项 enable_setting），用 `== false` 判断（未保存返回 nil 视为开启，老用户升级不丢选项）
+- **动态槽位**：`_populate_wheel` hook 每次按 `#option_list` 重建 entries + 同步 `settings.wheel_slots` + 缩放图标（原生 `_update_widget_locations` 用 `#entries` 均分角度，entries 数=实际数即自动均分）
+- `on_setting_changed`：所有 `enable_` 前缀设置变更都标 wheel_dirty 下帧刷新（拖拽开关除外）
+- **弹药状态（2026-08-20 修复）**：get_ammo_status 不再报"近战武器"——手持近战/空手时自动遍历武器槽找第一把有弹药的远程武器（优先当前手持远程）；无远程武器才报 no_ranged_weapon
 
 ### 快捷键
 
@@ -71,4 +80,7 @@ status_wheel/
 ## 六、待办
 
 - [ ] 游戏内实测：14 槽布局/拖拽/快捷键/高压按钮/help 联动/与旧 FTE 共存警告
+- [ ] 实测新增的**选项分类开关**（4 类总开关 + 13 子开关显隐、快捷键联动失效、折叠 group 显示）
+- [ ] 实测**动态槽位/均分/缩放**（关掉部分选项后剩余项是否均分、图标是否按数量缩放、空轮盘不崩）
+- [ ] 实测**弹药修复**（手持近战报告弹药 → 应报远程武器弹药）
 - [ ] 实测通过 → 打 zip（已备）+ Release
