@@ -1,7 +1,7 @@
 # status_wheel · 项目交接摘要
 
 > **给新会话的快速上手文档**：读完这个 + 通用规范（`暗潮\01-开发规范\Darktide-Mod开发规范.md`）即可接手。
-> 最后更新：2026-08-20 10:40 | 当前版本：v2.0.0（已推未实测；新增轮盘选项分类开关）
+> 最后更新：2026-08-27 13:00 | 当前版本：v2.0.0（已发 Release，2026-08-27；待游戏内实测）
 
 ---
 
@@ -23,8 +23,8 @@
 - 仅战斗显示（大厅隐藏）；防刷屏冷却；输出可配仅本地/队伍频道
 
 - **位置**：`D:\DeepseekWorkspace\暗潮\04-Mods\status_wheel\`
-- **仓库**：https://github.com/CiJhuiDi/darktide-status-wheel（已推未实测，无 Release）
-- **状态**：实现完成，**待游戏内实测**
+- **仓库**：https://github.com/CiJhuiDi/darktide-status-wheel（✅ 已发 Release v2.0.0，2026-08-27）
+- **状态**：实现完成，已发 Release v2.0.0，**待游戏内实测**
 
 ## 二、文件结构
 
@@ -83,4 +83,4 @@ status_wheel/
 - [ ] 实测新增的**选项分类开关**（4 类总开关 + 13 子开关显隐、快捷键联动失效、折叠 group 显示）
 - [ ] 实测**动态槽位/均分/缩放**（关掉部分选项后剩余项是否均分、图标是否按数量缩放、空轮盘不崩）
 - [ ] 实测**弹药修复**（手持近战报告弹药 → 应报远程武器弹药）
-- [ ] 实测通过 → 打 zip（已备）+ Release
+- [x] 打 zip + Release（v2.0.0，2026-08-27 已发：https://github.com/CiJhuiDi/darktide-status-wheel/releases/tag/v2.0.0）
