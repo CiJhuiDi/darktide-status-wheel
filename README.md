@@ -79,4 +79,8 @@ status_wheel/
 
 ## 参考
 
-- For The Emperor (NexusMods mod 135, GitHub MalkyLuke/ForTheEmperorRepo, 已停更)——功能整合来源，源码归档于 `D:\DeepseekWorkspace\暗潮\99-临时文件\fte_ref\`
+- For The Emperor (NexusMods mod 135, GitHub MalkyLuke/ForTheEmperorRepo, 已停更)——部分功能整合来源；原项目未声明开源协议，此处按社区惯例注明出处，原作者如有异议请联系处理
+
+## 许可 / License
+
+MIT License —— 详见 [LICENSE](LICENSE)。
