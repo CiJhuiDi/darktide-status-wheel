@@ -127,43 +127,44 @@ end
 
 -- ############ 选项执行总入口 ############
 
--- 执行一个轮盘选项（轮盘选中或快捷键共用）
-mod.execute_option = function (option)
-	if not option then
-		return
-	end
-
+-- 原版看不懂的 action 类选项（状态输出 / 求助 / 高压 / 是否）。
+-- 处理了就返回 true，调用方据此决定还要不要走通用动作。
+local function run_action_option(option)
 	local action = option.action
 
 	-- 状态条目：输出大招/手雷/子弹状态
 	if action == "ability" or action == "grenade" or action == "ammo" then
 		mod.handle_status_command(action)
 
-		return
+		return true
 	end
 
 	-- 求助联动
 	if action == "help" then
 		mod.need_help(10)
 
-		return
+		return true
 	end
 
 	-- 高压告警
 	if action == "pressure" then
 		mod.send_pressure_report()
 
-		return
+		return true
 	end
 
 	-- 是/否：聊天反馈（带颜色）
 	if action == "yes" or action == "no" then
 		mod.send_wheel_message(Localize(option.display_name), 5, action)
 
-		return
+		return true
 	end
 
-	-- 通用动作：标记 / 聊天 / 语音
+	return false
+end
+
+-- 通用动作：标记 / 聊天 / 语音 / 遥测
+local function run_generic_actions(option)
 	if option.tag_type then
 		trigger_smart_tag(option.tag_type)
 	end
@@ -178,6 +179,32 @@ mod.execute_option = function (option)
 	pcall(function ()
 		Managers.telemetry_reporters:reporter("com_wheel"):register_event(option.voice_event_data.voice_tag_id)
 	end)
+end
+
+-- 快捷键路径：完整执行。
+-- 快捷键**不经原版轮盘回调**，tag/chat/voice 必须自己来，
+-- 否则原生选项（如「谢谢」）绑了快捷键会直接没反应。
+mod.run_option_actions = function (option)
+	if not option then
+		return
+	end
+
+	if not run_action_option(option) then
+		run_generic_actions(option)
+	end
+end
+
+-- 轮盘选中路径：**只做原版不做的部分**。
+-- 原版 _on_com_wheel_stop_callback 已经按 option 的 tag_type / chat_message_data /
+-- voice_event_data 三个字段执行过了（见 hud_element_smart_tagging.lua L337-377），
+-- 这里再走一遍 run_generic_actions 就会让聊天/语音/标记各发两次
+-- （2026-09-12 用户实测「谢谢」连发两次）。
+mod.execute_option = function (option)
+	if not option then
+		return
+	end
+
+	run_action_option(option)
 end
 
 -- 快捷键总入口：战斗状态 + 存活检查 + 选项启用检查（被类/子开关禁用则不触发）
@@ -196,5 +223,5 @@ mod.run_option_by_keybind = function (key, option)
 		return
 	end
 
-	mod.execute_option(option)
+	mod.run_option_actions(option)
 end
