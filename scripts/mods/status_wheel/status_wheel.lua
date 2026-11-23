@@ -281,6 +281,37 @@ local function get_ability_extension(unit)
 	return ScriptUnit.extension(unit, "ability_system")
 end
 
+-- 读取大招冷却（返回 剩余冷却秒数, 最大冷却秒数）
+-- 2026-11 游戏更新：ability_system 改成资源制，旧的 max_ability_cooldown /
+-- remaining_ability_cooldown 方法被移除，直接调用会抛
+-- "attempt to call method 'max_ability_cooldown' (a nil value)"，
+-- 整个状态输出中断（轮盘选「大招状态」无反应）。这里按方法存在性做新旧两套读取。
+local function get_ability_cooldown_values(ability_extension, ability_type)
+	-- 新版：资源制。剩余资源比例 × 总回复时间 = 剩余冷却秒数（与资源 regen 速率无关）
+	if ability_extension.remaining_ability_resource_percentage and ability_extension.max_regen_time_for_ability_charge then
+		local ok_percent, remaining_percent = pcall(ability_extension.remaining_ability_resource_percentage, ability_extension, ability_type)
+		local ok_max, max_cooldown = pcall(ability_extension.max_regen_time_for_ability_charge, ability_extension, ability_type)
+
+		if ok_percent and ok_max and max_cooldown and max_cooldown > 0 and remaining_percent then
+			local remaining_cooldown = (1 - math.clamp(remaining_percent, 0, 1)) * max_cooldown
+
+			return remaining_cooldown, max_cooldown
+		end
+	end
+
+	-- 旧版：冷却时间 API
+	if ability_extension.max_ability_cooldown and ability_extension.remaining_ability_cooldown then
+		local ok_max, max_cooldown = pcall(ability_extension.max_ability_cooldown, ability_extension, ability_type)
+		local ok_remaining, remaining_cooldown = pcall(ability_extension.remaining_ability_cooldown, ability_extension, ability_type)
+
+		if ok_max and ok_remaining and max_cooldown and max_cooldown > 0 then
+			return remaining_cooldown, max_cooldown
+		end
+	end
+
+	return nil, nil
+end
+
 local function get_combat_ability_status()
 	local unit = mod.get_local_player_unit()
 
@@ -301,9 +332,12 @@ local function get_combat_ability_status()
 	end
 
 	local format = mod:get("ability_format")
+	local remaining_cooldown, max_cooldown = get_ability_cooldown_values(ability_extension, ability_type)
 	local can_use = ability_extension:can_use_ability(ability_type)
 
-	if can_use then
+	-- can_use 为 false 也可能只是武器要求不满足（如欧格林远程姿态要求手持远程武器），
+	-- 冷却已走完时同样按"可用"报告，避免误报成"冷却中 0%"
+	if can_use or (remaining_cooldown and remaining_cooldown <= 0) then
 		return mod:localize("ability_ready")
 	end
 
@@ -314,10 +348,7 @@ local function get_combat_ability_status()
 		return mod:localize("ability_charges", remaining_charges, max_charges)
 	end
 
-	local max_cooldown = ability_extension:max_ability_cooldown(ability_type)
-	local remaining_cooldown = ability_extension:remaining_ability_cooldown(ability_type)
-
-	if max_cooldown and max_cooldown > 0 then
+	if max_cooldown and max_cooldown > 0 and remaining_cooldown then
 		local percent = math.max(remaining_cooldown / max_cooldown * 100, 0)
 		local seconds = math.ceil(remaining_cooldown)
 
@@ -503,14 +534,21 @@ mod.handle_status_command = function (action)
 		mod.last_send_time[action] = now
 	end
 
+	-- 防御：状态读取里任何一处 API 变更都不应该让整个动作静默失败
+	-- （2026-11 大招冷却 API 被移除时就是「选中后毫无反应」）
 	local status_text
+	local ok, err = pcall(function ()
+		if action == "ability" then
+			status_text = get_combat_ability_status()
+		elseif action == "grenade" then
+			status_text = get_grenade_status()
+		elseif action == "ammo" then
+			status_text = get_ammo_status()
+		end
+	end)
 
-	if action == "ability" then
-		status_text = get_combat_ability_status()
-	elseif action == "grenade" then
-		status_text = get_grenade_status()
-	elseif action == "ammo" then
-		status_text = get_ammo_status()
+	if not ok then
+		mod:warning("[status_wheel] 状态读取失败（action=" .. tostring(action) .. "）：" .. tostring(err))
 	end
 
 	if not status_text then
